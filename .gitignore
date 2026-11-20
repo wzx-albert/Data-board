@@ -1,0 +1,11 @@
+# 工作记忆与本地笔记（含本机路径等私有信息，不进公开仓库）
+.workbuddy/memory/
+
+# 临时探查 / 诊断目录
+.probe/
+
+# 系统与编辑器杂项
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

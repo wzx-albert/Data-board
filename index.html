@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>宏观与市场指标看板</title>
+<link rel="stylesheet" href="assets/css/style.css?v=4">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-text">
+        <div class="brand-title">指标看板</div>
+        <div class="brand-sub">Macro &amp; Markets</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">
+      <div>数据源</div>
+      <div class="foot-list" id="footSources">Wind EDB · BEA · 美国财政部</div>    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 id="pageTitle">—</h1>
+        <p id="pageDesc"></p>
+      </div>
+      <div class="topbar-right">
+        <div class="upd">
+          <span class="upd-dot"></span>
+          <span id="updatedAt">—</span>
+        </div>
+      </div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<script src="assets/vendor/echarts.min.js"></script>
+<script src="data/market-data.js?v=20261119114822"></script>
+<script src="assets/js/registry.js?v=5"></script>
+<script src="assets/js/app.js?v=4"></script>
+</body>
+</html>
