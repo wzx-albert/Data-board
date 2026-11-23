@@ -46,7 +46,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "全部",
-      source: "国家统计局 / Wind EDB（M0039354）"
+      source: "国家统计局 / Wind EDB（M0039354）",
+      channel: "Wind MCP"
     },
 
     /* ---------------------------------------------------------------- 图 2 */
@@ -73,7 +74,8 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "5年",
       note: "各分项为 BEA 环比拉动率官方值",
-      source: "BEA / Wind EDB（G0000002、G0001773、G0001777、G0001784、G0001791）"
+      source: "BEA / Wind EDB（G0000002、G0001773、G0001777、G0001784、G0001791）",
+      channel: "WindPy EDB"
     },
 
     /* ---------------------------------------------------------------- 图 3 */
@@ -95,7 +97,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部",  periods: null }
       ],
       default: "3年",
-      source: "美国财政部 / 东方财富（Wind 积分不足时的替代源）"
+      source: "美国财政部 / 东方财富（Wind 积分不足时的替代源）",
+      channel: "东方财富"
     },
 
     /* ==================================================================
@@ -123,7 +126,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "Wind · 万得全A(881001.WI) 成交额"
+      source: "Wind · 万得全A(881001.WI) 成交额",
+      channel: "Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 5 */
@@ -145,7 +149,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "Wind · 万得全A(881001.WI) 换手率（自由流通口径）"
+      source: "Wind · 万得全A(881001.WI) 换手率（自由流通口径）",
+      channel: "Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 6 */
@@ -167,7 +172,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "待补：Wind EDB 无权限，涨跌家数暂缺稳定历史源"
+      source: "待补：Wind EDB 无权限，涨跌家数暂缺稳定历史源",
+      channel: "待补"
     },
 
     /* ---------------------------------------------------------------- 图 7 */
@@ -189,7 +195,8 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "3年",
       note: "两融自 2010-03 起",
-      source: "东方财富 · 两融历史（融资买入额）÷ Wind 万得全A 成交额"
+      source: "东方财富 · 两融历史（融资买入额）÷ Wind 万得全A 成交额",
+      channel: "东方财富 + Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 8 */
@@ -211,7 +218,8 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "3年",
       note: "两融自 2010-03 起",
-      source: "东方财富 · 两融历史（融资余额占流通市值比）"
+      source: "东方财富 · 两融历史（融资余额占流通市值比）",
+      channel: "东方财富 + Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 9 */
@@ -233,7 +241,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "5年",
-      source: "Wind · 万得全A(881001.WI) 市盈率 TTM"
+      source: "Wind · 万得全A(881001.WI) 市盈率 TTM",
+      channel: "Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 10 */
@@ -255,7 +264,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "5年",
-      source: "Wind · 万得全A(881001.WI) 市净率 PB(LF)"
+      source: "Wind · 万得全A(881001.WI) 市净率 PB(LF)",
+      channel: "Wind WSD"
     },
 
     /* ---------------------------------------------------------------- 图 11 */
@@ -278,7 +288,8 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "5年",
       note: "分位已做方向反转：数值越高表示越便宜",
-      source: "Wind · 万得全A 市盈率 TTM 与中债 10 年期国债收益率(S0059749)"
+      source: "Wind · 万得全A 市盈率 TTM 与中债 10 年期国债收益率(S0059749)",
+      channel: "Wind WSD"
     }
   ]
 };

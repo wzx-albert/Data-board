@@ -147,6 +147,7 @@ body{
 }
 .card-foot .src{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .card-foot .note{flex:0 0 auto;color:#b08968;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-foot .channel{flex:0 0 auto;white-space:nowrap;padding:1px 7px;border:1px solid var(--border);border-radius:10px;background:#f1f3f6;color:var(--text-2);}
 .card-foot .latest{flex:0 0 auto;white-space:nowrap;}
 
 .modes{display:flex;gap:0;margin-left:8px;align-self:flex-end;border:1px solid var(--border);border-radius:5px;overflow:hidden;}

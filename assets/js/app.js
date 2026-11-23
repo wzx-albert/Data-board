@@ -391,6 +391,7 @@
       : (src ? (src.labels ? src.labels[src.labels.length - 1] : src.dates[src.dates.length - 1]) : "");
     foot.appendChild(el("span", "src", "数据来源：" + (chart.source || "—")));
     if (chart.note) foot.appendChild(el("span", "note", chart.note));
+    if (chart.channel) foot.appendChild(el("span", "channel", "通道：" + chart.channel));
     foot.appendChild(el("span", "latest num", "最新 " + lastLabel));
     card.appendChild(foot);
 
