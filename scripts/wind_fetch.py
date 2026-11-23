@@ -9,23 +9,24 @@ import sys, json, time, datetime
 import win32com.client as win32
 
 # 探测清单: (标签, 函数, 代码, 字段)
+# 本脚本只负责 WSD（证券/债券行情）。宏观 EDB 数据改用 WindPy w.edb()，见 scripts/fetch_quarters.py。
 PROBE = [
     ("全A收盘", "WSD", "881001.WI", "close"),
     ("全A成交额", "WSD", "881001.WI", "amt"),
     ("全A换手率", "WSD", "881001.WI", "turn"),
     ("全A_PE_TTM", "WSD", "881001.WI", "pe_ttm"),
     ("全A_PB", "WSD", "881001.WI", "pb_lf"),
-    ("中债国债1Y", "EDB", "S0059744", ""),
-    ("中债国债10Y", "EDB", "S0059749", ""),
-    ("中票AA+3Y", "EDB", "S0059724", ""),
-    ("两融余额", "EDB", "M0021386", ""),
+    ("中债国债1Y", "WSD", "S0059744", "close"),
+    ("中债国债10Y", "WSD", "S0059749", "close"),
+    ("中票AA+3Y", "WSD", "S0059724", "close"),
 ]
 
 
 def formula(func, code, field, start, end, options=None):
     if func == "EDB":
-        # EDB 第 4 个参数不能传空串，否则 #VALUE!
-        return '=EDB("%s","%s","%s","%s")' % (code, start, end, options or "unit=1")
+        # 已弃用：本插件版本的 =EDB() 公式不认（3 参数也 #VALUE!）。
+        # 宏观 EDB 改用 WindPy w.edb()，此处仅保留作记录。
+        return '=EDB("%s","%s","%s")' % (code, start, end)
     return '=WSD("%s","%s","%s","%s","%s")' % (code, field, start, end, options or "")
 
 

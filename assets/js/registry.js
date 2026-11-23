@@ -63,7 +63,7 @@ window.DASHBOARD_CONFIG = {
         { key: "us_contrib_pce", name: "个人消费支出", type: "bar", color: "red",    stack: "y" },
         { key: "us_contrib_inv", name: "私人投资",     type: "bar", color: "blue",   stack: "y" },
         { key: "us_contrib_gov", name: "政府支出",     type: "bar", color: "purple", stack: "y" },
-        { key: "us_contrib_net", name: "净出口（估算）", type: "bar", color: "teal",   stack: "y" },
+        { key: "us_contrib_net", name: "净出口", type: "bar", color: "teal",   stack: "y" },
         { key: "us_gdp_saar",    name: "实际 GDP",     type: "line", color: "ink",   width: 2 }
       ],
       ranges: [
@@ -72,8 +72,8 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "5年",
-      note: "净出口为残差估算 · 2026Q3 政府项缺",
-      source: "BEA / Wind EDB（G0000002、G0001773、G0001777、G1140985）；净出口待补 G0001784"
+      note: "各分项为 BEA 环比拉动率官方值",
+      source: "BEA / Wind EDB（G0000002、G0001773、G0001777、G0001784、G0001791）"
     },
 
     /* ---------------------------------------------------------------- 图 3 */

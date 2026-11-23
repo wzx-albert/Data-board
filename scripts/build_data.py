@@ -129,12 +129,16 @@ def build(full=False, check_only=False):
     qdates, qlabels = q["dates"], q["labels"]
     sv = {k: v["values"] for k, v in q["series"].items()}
 
-    # 净出口 = GDP 增速 - 消费 - 投资 - 政府（残差计算，任何一项缺失则为 None）
+    # 净出口：优先用官方值（G0001784），缺失期用残差兜底（GDP - 消费 - 投资 - 政府）
     net = []
+    official_net = sv.get("us_contrib_net", [])
     for i in range(len(qdates)):
-        parts = [sv["us_gdp_saar"][i], sv["us_contrib_pce"][i],
-                 sv["us_contrib_inv"][i], sv["us_contrib_gov"][i]]
-        net.append(None if any(p is None for p in parts) else round(parts[0] - sum(parts[1:]), 2))
+        v = official_net[i] if i < len(official_net) else None
+        if v is None:
+            parts = [sv["us_gdp_saar"][i], sv["us_contrib_pce"][i],
+                     sv["us_contrib_inv"][i], sv["us_contrib_gov"][i]]
+            v = None if any(p is None for p in parts) else round(parts[0] - sum(parts[1:]), 2)
+        net.append(v)
     sv["us_contrib_net"] = net
 
     if check_only:
