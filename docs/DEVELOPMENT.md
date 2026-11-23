@@ -24,6 +24,17 @@ scripts/merge_quarters.py  把新季度并入存量
 
 每张图都有全局唯一编号，编号显示在卡片左上角。
 
+### 布局规则（默认两列）
+
+页面容器 `.page` 是两列网格：**一排两张图，左一张右一张**。新增图不需要写任何布局代码，会自动按顺序填格子。
+
+- 每组（`group`）的卡片数为偶数 → 正好两两成排
+- 卡片数为奇数 → **落单的最后一张自动占满整行**（`.span-2`），避免右半留空
+- 顶部总览面板 `.overview` 与分组标题 `.group-head` 始终占满整行
+- 窗口宽度 ≤900px 时回退为单列（手机 / 窄屏）
+
+这套规则由 `app.js` 的 `renderPages()` 自动判定，不要在 `registry.js` 里手写布局字段。
+
 ## 时间轴交互
 
 - 底部滑块：拖动两端缩放、拖中间平移
@@ -106,3 +117,64 @@ python scripts/build_data.py --full
 可选字段：`axisTickBy: "Q1"`（季度轴按年对齐）、`statKey`（卡片右上角主数值用哪个系列）、`deltaMode: "bp"`（利率变动按 bp 显示）、`note`（底部提示）、`tooltipUnit: false`（多系列单位不统一时不显示单位）。
 
 图表类型：`type: "line"` 或 `"bar"`；多个 `bar` 给相同 `stack` 值即堆叠。
+
+---
+
+## A股情绪板块（page: sentiment）
+
+与前三个板块不同：数据不走 `market-data.js`，而是独立文件 `data/sentiment-data.js`，因为体量大（约 5000 个交易日 × 8 个序列）。
+
+### 数据链路
+
+```
+底表（csv / xlsx，由数据源导出）
+  ↓ python scripts/import_sentiment.py --file <底表>
+data/source/sentiment.json          # 原料：原始日频字段
+  ↓ python scripts/build_sentiment.py
+data/sentiment-data.js              # 成品：8 个衍生指标 + 分位 + 汇总
+```
+
+### 原料字段
+
+`data/source/sentiment.json` 的 `raw` 下支持这些字段（缺哪个，对应指标自动留空）：
+
+| 字段 | 含义 | 单位 |
+|---|---|---|
+| `amount` | A股成交额 | 元 |
+| `mktcap_total` / `mktcap_float` | A股总市值 / 流通市值 | 元 |
+| `turnover` | 换手率（缺省时由成交额÷流通市值算） | % |
+| `adv` / `dec` | 上涨家数 / 下跌家数 | 家 |
+| `pe` / `pb` | 全A 市盈率 TTM / 市净率 | 倍 |
+| `y10` | 10 年期国债收益率 | % |
+| `margin_buy` / `margin_bal` | 融资买入额 / 融资余额 | 元 |
+
+### 8 个指标与口径
+
+| key | 指标 | 维度 | 算法 |
+|---|---|---|---|
+| `sent_amt_cap` | 成交额 / 总市值 | 量 | amount ÷ mktcap_total |
+| `sent_turnover` | 换手率 | 量 | 直接取，或 amount ÷ mktcap_float |
+| `sent_advance` | 上涨家数占比 | 价 | adv ÷ (adv + dec) |
+| `sent_mbuy` | 融资买入 / 成交额 | 资金 | margin_buy ÷ amount |
+| `sent_mbal` | 融资余额 / 总市值 | 资金 | margin_bal ÷ mktcap_total |
+| `sent_pe` | 全A 市盈率 TTM | 估值 | 直接取 |
+| `sent_pb` | 全A 市净率 | 估值 | 直接取 |
+| `sent_erp` | EP − 10Y 国债 | 风险溢价 | 100 ÷ pe − y10 |
+
+### 分位与情绪温度
+
+- 每个指标输出两条数组：`values`（原值）与 `pctl`（**全历史分位**，自数据起点扩展窗口，0–100）
+- 顶部总览的「情绪温度」= 8 个指标分位的算术均值
+- **ERP 做方向反转**：ERP 高代表便宜、情绪低，因此汇总时用 `100 − pctl`。该反转在 `build_sentiment.py` 的 `SPECS` 里由 `invert=True` 控制
+
+### 加一个情绪指标
+
+1. 在 `build_sentiment.py` 的 `SPECS` 里加一行 `(key, 名称, 单位, 维度, 小数位, 是否反向)`
+2. 在 `values` 字典里算出该指标序列
+3. 在 `import_sentiment.py` 的 `ALIASES` 里登记底表列名（如果来自新字段）
+4. 在 `registry.js` 里加一张图，给 `dataKey: "新key"` 和 `modeToggle: true`
+5. 依次跑 `import_sentiment.py` → `build_sentiment.py`
+
+### 注意
+
+`build_sentiment.py --demo` 会用随机序列生成占位数据，并在 `meta.demo = true`；页面上会出现红色「示例数据」角标。**正式上线前必须用真实底表重建**，不能把 demo 数据推上去。

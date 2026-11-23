@@ -7,6 +7,7 @@
 
   var CFG = window.DASHBOARD_CONFIG;
   var DATA = (window.MARKET_DATA && window.MARKET_DATA.series) || {};
+  var SENT = (window.SENTIMENT_DATA && window.SENTIMENT_DATA.series) ? window.SENTIMENT_DATA : null;
 
   var PALETTE = {
     blue: "#1e4b8f",
@@ -22,7 +23,31 @@
   var FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   var instances = new Map();   // chartId -> echarts instance
   var observers = new Map();   // chartId -> ResizeObserver
+  var modes = new Map();       // chartId -> "raw" | "pctl"
   var currentPage = null;
+
+  /* --------------------------- 情绪板块辅助 --------------------------- */
+  function isSent(chart) { return !!chart.dataKey; }
+  function sentSeries(chart) {
+    return (SENT && SENT.series && chart.dataKey) ? SENT.series[chart.dataKey] : null;
+  }
+  function sentUnit(chart, mode) {
+    var s = sentSeries(chart);
+    if (mode === "pctl") return "%";
+    return (s && s.unit) || chart.unit || "";
+  }
+  function sentPairs(chart, mode) {
+    var s = sentSeries(chart);
+    if (!s || !SENT) return [];
+    var arr = mode === "pctl" ? s.pctl : s.values;
+    var out = [];
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] === null || arr[i] === undefined) continue;
+      out.push([SENT.dates[i], arr[i]]);
+    }
+    return out;
+  }
+  function modeOf(chart) { return modes.get(chart.id) || "raw"; }
 
   /* ------------------------------ utils ------------------------------ */
   function el(tag, cls, html) {
@@ -49,16 +74,52 @@
     return { last: last, prev: prev };
   }
   function xData(chart) {
+    if (isSent(chart)) return (SENT && SENT.dates) || [];
     var s = seriesOf(chart.series[0].key);
     if (!s) return [];
     return chart.axisType === "time" ? s.dates : (s.labels || s.dates);
   }
 
-  /* --------------------------- option build --------------------------- */
-  function buildOption(chart) {
+  var GROUP_COLOR = { "量": "red", "价": "orange", "资金": "purple", "估值": "blue", "风险溢价": "teal" };
+
+  function buildSentSeries(chart, mode) {
+    var s = sentSeries(chart);
+    var col = PALETTE[GROUP_COLOR[chart.group] || "blue"] || PALETTE.blue;
+    var item = {
+      name: (s && s.label) || chart.title,
+      type: "line",
+      yAxisIndex: 0,
+      itemStyle: { color: col },
+      emphasis: { focus: "series" },
+      lineStyle: { width: 1.6, color: col },
+      showSymbol: false,
+      sampling: "lttb",
+      z: 12,
+      data: sentPairs(chart, mode)
+    };
+    item.areaStyle = {
+      color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: hexA(col, mode === "pctl" ? 0.26 : 0.18) },
+        { offset: 1, color: hexA(col, 0.01) }
+      ])
+    };
+    if (mode === "pctl") {
+      item.markLine = {
+        silent: true, symbol: "none", animation: false,
+        lineStyle: { color: "#c9d1de", type: "dashed", width: 1 },
+        label: { show: false },
+        data: [{ yAxis: 20 }, { yAxis: 80 }]
+      };
+    }
+    return item;
+  }
+
+  function buildOption(chart, mode) {
+    mode = mode || "raw";
+    var sent = isSent(chart);
     var xs = xData(chart);
     var n = xs.length;
-    var multi = chart.series.length > 1;
+    var multi = !sent && chart.series.length > 1;
     var showLegend = multi || chart.legend === true;
 
     var zoom = { start: 0, end: 100 };
@@ -97,7 +158,7 @@
           splitLine: { show: false }
         };
 
-    var series = chart.series.map(function (s) {
+    var series = sent ? [buildSentSeries(chart, mode)] : chart.series.map(function (s) {
       var src = seriesOf(s.key);
       var color = PALETTE[s.color] || s.color || PALETTE.blue;
       var item = {
@@ -183,7 +244,9 @@
             if (Array.isArray(v)) v = v[1];
             var unit = chart.tooltipUnit === false
               ? ""
-              : (p.seriesName && chart.seriesUnit && chart.seriesUnit[p.seriesName]) || chart.unit || "";
+              : sent
+                ? sentUnit(chart, mode)
+                : ((p.seriesName && chart.seriesUnit && chart.seriesUnit[p.seriesName]) || chart.unit || "");
             return '<div style="display:flex;align-items:center;gap:14px;justify-content:space-between;margin-top:5px">' +
               '<span style="color:#5f6773">' + p.marker + p.seriesName + "</span>" +
               '<span style="font-variant-numeric:tabular-nums;font-weight:600">' + fmt(v) +
@@ -196,12 +259,17 @@
       xAxis: xAxis,
       yAxis: {
         type: "value",
-        scale: true,
+        scale: !(sent && mode === "pctl"),
+        min: sent && mode === "pctl" ? 0 : null,
+        max: sent && mode === "pctl" ? 100 : null,
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
           color: "#949ba6", fontSize: 11, margin: 10,
-          formatter: function (v) { return v + (chart.unit === "%" ? "%" : ""); }
+          formatter: function (v) {
+            var u = sent ? sentUnit(chart, mode) : chart.unit;
+            return v + (u === "%" ? "%" : "");
+          }
         },
         splitLine: { lineStyle: { color: "#f0f2f6", type: "dashed" } }
       },
@@ -255,13 +323,14 @@
     head.appendChild(tw);
 
     // 主数值
-    var statKey = chart.statKey || chart.series[0].key;
-    var statSrc = seriesOf(statKey);
+    var statKey = chart.statKey || (chart.series && chart.series[0].key);
+    var statSrc = isSent(chart) ? sentSeries(chart) : seriesOf(statKey);
     var stat = el("div", "card-stat");
     if (statSrc) {
       var lt = lastTwo(statSrc.values);
-      var va = el("div", "stat-value num", fmt(lt.last) +
-        '<span class="stat-unit">' + (chart.unit || "") + "</span>");
+      var statUnit = isSent(chart) ? (statSrc.unit || "") : (chart.unit || "");
+      var va = el("div", "stat-value num", fmt(lt.last, isSent(chart) ? (statSrc.digits || 2) : 2) +
+        '<span class="stat-unit">' + statUnit + "</span>");
       stat.appendChild(va);
       if (lt.prev !== null) {
         var diff = lt.last - lt.prev;
@@ -269,7 +338,7 @@
         if (chart.deltaMode === "bp") {
           txt = "较前值 " + (diff >= 0 ? "+" : "") + (diff * 100).toFixed(1) + " bp";
         } else {
-          txt = "较上期 " + (diff >= 0 ? "+" : "") + diff.toFixed(2);
+          txt = (isSent(chart) ? "较上日 " : "较上期 ") + (diff >= 0 ? "+" : "") + diff.toFixed(2);
         }
         var dcls = "stat-delta num " + (diff >= 0 ? "up" : "down");
         stat.appendChild(el("div", dcls, txt));
@@ -296,13 +365,30 @@
       head2.appendChild(bar);
     }
 
+    // 值 / 分位 切换
+    if (chart.modeToggle) {
+      var sw = el("div", "modes");
+      [{ k: "raw", t: "值" }, { k: "pctl", t: "分位" }].forEach(function (o) {
+        var b = el("button", "mode-btn" + (modeOf(chart) === o.k ? " active" : ""), o.t);
+        b.addEventListener("click", function () {
+          sw.querySelectorAll(".mode-btn").forEach(function (x) { x.classList.remove("active"); });
+          b.classList.add("active");
+          switchMode(chart, o.k);
+        });
+        sw.appendChild(b);
+      });
+      card.querySelector(".card-head").appendChild(sw);
+    }
+
     var chartEl = el("div", "chart");
     chartEl.id = "chart-" + chart.id;
     card.appendChild(chartEl);
 
     var foot = el("div", "card-foot");
-    var src = seriesOf(chart.series[0].key);
-    var lastLabel = src ? (src.labels ? src.labels[src.labels.length - 1] : src.dates[src.dates.length - 1]) : "";
+    var src = isSent(chart) ? null : seriesOf(chart.series[0].key);
+    var lastLabel = isSent(chart)
+      ? (SENT && SENT.meta ? SENT.meta.end : "")
+      : (src ? (src.labels ? src.labels[src.labels.length - 1] : src.dates[src.dates.length - 1]) : "");
     foot.appendChild(el("span", "src", "数据来源：" + (chart.source || "—")));
     if (chart.note) foot.appendChild(el("span", "note", chart.note));
     foot.appendChild(el("span", "latest num", "最新 " + lastLabel));
@@ -317,6 +403,70 @@
     var n = xData(chart).length;
     var start = (!periods || periods >= n) ? 0 : ((n - periods) / n) * 100;
     inst.dispatchAction({ type: "dataZoom", start: start, end: 100 });
+  }
+
+  function switchMode(chart, mode) {
+    var inst = instances.get(chart.id);
+    if (!inst) { modes.set(chart.id, mode); return; }
+    var dz = inst.getOption().dataZoom || [];
+    var start = dz.length ? dz[0].start : 0;
+    var end = dz.length ? dz[0].end : 100;
+    modes.set(chart.id, mode);
+    inst.setOption(buildOption(chart, mode), true);
+    inst.dispatchAction({ type: "dataZoom", start: start, end: end });
+  }
+
+  /* --------------------------- 情绪总览面板 --------------------------- */
+  function heatText(v) {
+    if (v === null || v === undefined) return { label: "—", cls: "" };
+    if (v >= 80) return { label: "过热", cls: "hot" };
+    if (v >= 60) return { label: "偏热", cls: "warm" };
+    if (v >= 40) return { label: "中性", cls: "mid" };
+    if (v >= 20) return { label: "偏冷", cls: "cool" };
+    return { label: "过冷", cls: "cold" };
+  }
+
+  function buildOverview() {
+    if (!SENT || !SENT.summary || !SENT.summary.items || !SENT.summary.items.length) return null;
+    var sum = SENT.summary;
+    var box = el("section", "overview");
+    if (SENT.meta && SENT.meta.demo) {
+      box.appendChild(el("div", "ov-demo", "示例数据 · 仅用于版式预览，不代表真实行情"));
+    }
+
+    var left = el("div", "ov-left");
+    var h = heatText(sum.avg);
+    left.appendChild(el("div", "ov-k", "情绪温度 · 分位均值"));
+    left.appendChild(el("div", "ov-v num " + h.cls, (sum.avg === null ? "—" : sum.avg) +
+      '<span class="ov-unit">分位</span>'));
+    left.appendChild(el("div", "ov-tag " + h.cls, h.label));
+    left.appendChild(el("div", "ov-note",
+      (SENT.meta ? SENT.meta.windowNote + " · 样本 " + SENT.meta.start + " 起" : "")));
+    box.appendChild(left);
+
+    var grid = el("div", "ov-grid");
+    sum.items.forEach(function (it) {
+      var cell = el("div", "ov-cell");
+      var p = it.pctl;
+      var inv = SENT.series[it.key] && SENT.series[it.key].invert;
+      var heat = inv && p !== null ? 100 - p : p;
+      var tt = heatText(heat);
+      cell.appendChild(el("div", "ov-cell-k", it.label));
+      cell.appendChild(el("div", "ov-cell-v num",
+        (it.value === null || it.value === undefined ? "—" : Number(it.value).toFixed(it.digits || 2)) +
+        '<span class="ov-cell-u">' + (it.unit || "") + "</span>"));
+      var bar = el("div", "ov-bar");
+      var fill = el("i", "ov-bar-fill " + tt.cls);
+      fill.style.width = (p === null ? 0 : Math.max(2, Math.min(100, p))) + "%";
+      bar.appendChild(fill);
+      cell.appendChild(bar);
+      cell.appendChild(el("div", "ov-cell-p",
+        '<span class="num">' + (p === null ? "—" : p.toFixed(0)) + "</span> 分位" +
+        (inv ? '<em>（反向）</em>' : "")));
+      grid.appendChild(cell);
+    });
+    box.appendChild(grid);
+    return box;
   }
 
   /* ------------------------------- pages ------------------------------- */
@@ -341,16 +491,43 @@
       var sec = el("div", "page");
       sec.id = "page-" + page.id;
 
-      CFG.charts.filter(function (c) { return c.page === page.id; })
-        .sort(function (a, b) { return a.id - b.id; })
-        .forEach(function (c) { sec.appendChild(buildCard(c)); });
+      if (page.overview === "sentiment") {
+        var ov = buildOverview();
+        if (ov) sec.appendChild(ov);
+      }
+
+      var cards = CFG.charts.filter(function (c) { return c.page === page.id; })
+        .sort(function (a, b) { return a.id - b.id; });
+
+      // 两列布局：先算每组卡片数，落单的最后一张占满整行，避免右半留空
+      var groupTotal = {}, groupSeen = {};
+      cards.forEach(function (c) {
+        var g = c.group || "__page__";
+        groupTotal[g] = (groupTotal[g] || 0) + 1;
+      });
+
+      var lastGroup = null;
+      cards.forEach(function (c) {
+        var g = c.group || "__page__";
+        if (c.group && c.group !== lastGroup) {
+          lastGroup = c.group;
+          sec.appendChild(el("div", "group-head",
+            '<span class="gh-name">' + c.group + "</span>"));
+        }
+        groupSeen[g] = (groupSeen[g] || 0) + 1;
+        var card = buildCard(c);
+        if (groupTotal[g] % 2 === 1 && groupSeen[g] === groupTotal[g]) {
+          card.classList.add("span-2");
+        }
+        sec.appendChild(card);
+      });
 
       content.appendChild(sec);
 
       var btn = el("button", "nav-item");
       btn.dataset.page = page.id;
       btn.innerHTML = '<span>' + page.name + "</span>" +
-        '<span class="nav-count">' + sec.children.length + "</span>";
+        '<span class="nav-count">' + sec.querySelectorAll(".card").length + "</span>";
       btn.addEventListener("click", function () { location.hash = "#/" + page.id; });
       nav.appendChild(btn);
     });

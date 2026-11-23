@@ -22,7 +22,9 @@ window.DASHBOARD_CONFIG = {
   pages: [
     { id: "cn-macro", name: "中国宏观", desc: "经济增长、价格与政策脉络" },
     { id: "overseas", name: "海外宏观", desc: "美国及主要经济体增长与结构" },
-    { id: "assets",   name: "大类资产", desc: "利率、汇率、权益与商品价格" }
+    { id: "assets",   name: "大类资产", desc: "利率、汇率、权益与商品价格" },
+    { id: "sentiment", name: "A股情绪", desc: "量、价、资金、估值、风险溢价五个维度",
+      overview: "sentiment" }
   ],
 
   charts: [
@@ -94,6 +96,189 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "3年",
       source: "美国财政部 / 东方财富（Wind 积分不足时的替代源）"
+    },
+
+    /* ==================================================================
+     * A股情绪板块（page: sentiment）
+     * 与上面三张图不同：dataKey 指向 data/sentiment-data.js，
+     * modeToggle 开启后每张图可在「值 / 历史分位」之间切换。
+     * ================================================================== */
+
+    /* ---------------------------------------------------------------- 图 4 */
+    {
+      id: 4,
+      page: "sentiment",
+      group: "量",
+      title: "成交额占总市值比例",
+      subtitle: "日度 · A股成交额 ÷ A股总市值",
+      unit: "%",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_amt_cap",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "3年",
+      source: "东方财富 · 全A(沪深京) 成交额与总市值"
+    },
+
+    /* ---------------------------------------------------------------- 图 5 */
+    {
+      id: 5,
+      page: "sentiment",
+      group: "量",
+      title: "换手率",
+      subtitle: "日度 · 成交额 ÷ 流通市值",
+      unit: "%",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_turnover",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "3年",
+      source: "东方财富 · 全A(沪深京) 换手率（基准：流通市值）"
+    },
+
+    /* ---------------------------------------------------------------- 图 6 */
+    {
+      id: 6,
+      page: "sentiment",
+      group: "价",
+      title: "上涨家数占比",
+      subtitle: "日度 · 上涨家数 ÷ (上涨 + 下跌)",
+      unit: "%",
+      digits: 1,
+      axisType: "time",
+      dataKey: "sent_advance",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "3年",
+      source: "东方财富 · 全A(沪深京) 上涨家数、下跌家数"
+    },
+
+    /* ---------------------------------------------------------------- 图 7 */
+    {
+      id: 7,
+      page: "sentiment",
+      group: "资金",
+      title: "融资买入额占成交额",
+      subtitle: "日度 · 融资买入额 ÷ A股成交额",
+      unit: "%",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_mbuy",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "全部", periods: null }
+      ],
+      default: "3年",
+      note: "两融自 2010-03 起",
+      source: "东方财富 · 数据中心融资融券汇总"
+    },
+
+    /* ---------------------------------------------------------------- 图 8 */
+    {
+      id: 8,
+      page: "sentiment",
+      group: "资金",
+      title: "融资余额占A股市值",
+      subtitle: "日度 · 融资余额 ÷ A股总市值",
+      unit: "%",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_mbal",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "全部", periods: null }
+      ],
+      default: "3年",
+      note: "两融自 2010-03 起",
+      source: "东方财富 · 数据中心融资融券汇总"
+    },
+
+    /* ---------------------------------------------------------------- 图 9 */
+    {
+      id: 9,
+      page: "sentiment",
+      group: "估值",
+      title: "全A 市盈率（TTM）",
+      subtitle: "日度 · 东方财富全A(沪深京) 整体法",
+      unit: "倍",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_pe",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "5年",
+      source: "东方财富 · 全A(沪深京) 市盈率 TTM"
+    },
+
+    /* ---------------------------------------------------------------- 图 10 */
+    {
+      id: 10,
+      page: "sentiment",
+      group: "估值",
+      title: "全A 市净率",
+      subtitle: "日度 · 东方财富全A(沪深京) 整体法",
+      unit: "倍",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_pb",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "5年",
+      source: "东方财富 · 全A(沪深京) 市净率"
+    },
+
+    /* ---------------------------------------------------------------- 图 11 */
+    {
+      id: 11,
+      page: "sentiment",
+      group: "风险溢价",
+      title: "股权风险溢价（EP − 10Y 国债）",
+      subtitle: "日度 · 全A 隐含收益率 减 10年期国债收益率",
+      unit: "%",
+      digits: 2,
+      axisType: "time",
+      dataKey: "sent_erp",
+      modeToggle: true,
+      ranges: [
+        { label: "1年", periods: 250 },
+        { label: "3年", periods: 750 },
+        { label: "5年", periods: 1250 },
+        { label: "全部", periods: null }
+      ],
+      default: "5年",
+      note: "分位已做方向反转：数值越高表示越便宜",
+      source: "东方财富 · 全A 市盈率 TTM 与 10 年期国债收益率"
     }
   ]
 };
