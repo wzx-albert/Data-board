@@ -44,11 +44,11 @@ SRC = os.path.join(BASE, "data", "source", "sentiment.json")
 
 # 指标定义：key, 名称, 单位, 维度, 小数位, 是否反向（分位越高代表情绪越低）
 SPECS = [
-    ("sent_amt_cap",  "成交额 / 总市值",       "%",  "量",   2, False),
+    ("sent_amt_cap",  "A股成交额",             "亿元", "量",  0, False),
     ("sent_turnover", "换手率",                "%",  "量",   2, False),
     ("sent_advance",  "上涨家数占比",          "%",  "价",   1, False),
     ("sent_mbuy",     "融资买入 / 成交额",     "%",  "资金", 2, False),
-    ("sent_mbal",     "融资余额 / 总市值",     "%",  "资金", 2, False),
+    ("sent_mbal",     "融资余额 / 流通市值",   "%",  "资金", 2, False),
     ("sent_pe",       "全A 市盈率 TTM",        "倍", "估值", 2, False),
     ("sent_pb",       "全A 市净率",            "倍", "估值", 2, False),
     ("sent_erp",      "EP − 10Y 国债",         "%",  "风险溢价", 2, True),
@@ -153,9 +153,14 @@ def build(src, demo=False):
     turn_in, adv, dec = g("turnover"), g("adv"), g("dec")
     pe, pb, y10 = g("pe"), g("pb"), g("y10")
     mbuy, mbal = g("margin_buy"), g("margin_bal")
+    mbal_r_in = g("margin_bal_float_ratio")
+
+    # 总市值缺失时用流通市值兜底（分母口径会在 meta 里标注）
+    if all(v is None for v in cap_t):
+        cap_t = cap_f
 
     # 衍生指标
-    amt_cap = [div(amount[i], cap_t[i], 100) for i in range(n)]
+    amt_cap = [round(amount[i] / 1e8, 1) if amount[i] is not None else None for i in range(n)]
 
     turnover = []
     for i in range(n):
@@ -170,7 +175,12 @@ def build(src, demo=False):
         advance.append(round(a / (a + d) * 100, 2) if (a is not None and d is not None and (a + d) > 0) else None)
 
     mbuy_r = [div(mbuy[i], amount[i], 100) for i in range(n)]
-    mbal_r = [div(mbal[i], cap_t[i], 100) for i in range(n)]
+    mbal_r = []
+    for i in range(n):
+        if mbal_r_in[i] not in (None, 0):
+            mbal_r.append(round(mbal_r_in[i], 4))     # 东财官方口径：占流通市值
+        else:
+            mbal_r.append(div(mbal[i], cap_f[i], 100))
 
     # EP − 10Y：EP = 100 / PE，与国债收益率同为百分数，直接相减
     erp = []
@@ -233,7 +243,8 @@ def build(src, demo=False):
     print(f"[out] {OUT}  {os.path.getsize(OUT)/1024:.1f} KB  {n} 点 {dates[0]} → {dates[-1]}")
     print(f"[summary] 情绪温度（分位均值）= {avg}")
     for it in items:
-        print(f"  {it['label']:16s} {it['value']:>10} {it['unit']:<2s} 分位 {it['pctl']}")
+        v = "-" if it["value"] is None else it["value"]
+        print(f"  {it['label']:16s} {str(v):>10} {it['unit']:<2s} 分位 {it['pctl']}")
     bump_cache()
 
 

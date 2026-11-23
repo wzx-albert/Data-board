@@ -109,10 +109,10 @@ window.DASHBOARD_CONFIG = {
       id: 4,
       page: "sentiment",
       group: "量",
-      title: "成交额占总市值比例",
-      subtitle: "日度 · A股成交额 ÷ A股总市值",
-      unit: "%",
-      digits: 2,
+      title: "A股成交额",
+      subtitle: "日度 · 万得全A 成交额，分位看历史活跃度",
+      unit: "亿元",
+      digits: 0,
       axisType: "time",
       dataKey: "sent_amt_cap",
       modeToggle: true,
@@ -123,7 +123,7 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "东方财富 · 全A(沪深京) 成交额与总市值"
+      source: "Wind · 万得全A(881001.WI) 成交额"
     },
 
     /* ---------------------------------------------------------------- 图 5 */
@@ -145,7 +145,7 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "东方财富 · 全A(沪深京) 换手率（基准：流通市值）"
+      source: "Wind · 万得全A(881001.WI) 换手率（自由流通口径）"
     },
 
     /* ---------------------------------------------------------------- 图 6 */
@@ -154,7 +154,7 @@ window.DASHBOARD_CONFIG = {
       page: "sentiment",
       group: "价",
       title: "上涨家数占比",
-      subtitle: "日度 · 上涨家数 ÷ (上涨 + 下跌)",
+      subtitle: "日度 · 上涨家数 ÷ (上涨 + 下跌) · 数据待补",
       unit: "%",
       digits: 1,
       axisType: "time",
@@ -167,7 +167,7 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "3年",
-      source: "东方财富 · 全A(沪深京) 上涨家数、下跌家数"
+      source: "待补：Wind EDB 无权限，涨跌家数暂缺稳定历史源"
     },
 
     /* ---------------------------------------------------------------- 图 7 */
@@ -189,7 +189,7 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "3年",
       note: "两融自 2010-03 起",
-      source: "东方财富 · 数据中心融资融券汇总"
+      source: "东方财富 · 两融历史（融资买入额）÷ Wind 万得全A 成交额"
     },
 
     /* ---------------------------------------------------------------- 图 8 */
@@ -197,8 +197,8 @@ window.DASHBOARD_CONFIG = {
       id: 8,
       page: "sentiment",
       group: "资金",
-      title: "融资余额占A股市值",
-      subtitle: "日度 · 融资余额 ÷ A股总市值",
+      title: "融资余额占流通市值",
+      subtitle: "日度 · 融资余额 ÷ A股流通市值",
       unit: "%",
       digits: 2,
       axisType: "time",
@@ -211,7 +211,7 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "3年",
       note: "两融自 2010-03 起",
-      source: "东方财富 · 数据中心融资融券汇总"
+      source: "东方财富 · 两融历史（融资余额占流通市值比）"
     },
 
     /* ---------------------------------------------------------------- 图 9 */
@@ -220,7 +220,7 @@ window.DASHBOARD_CONFIG = {
       page: "sentiment",
       group: "估值",
       title: "全A 市盈率（TTM）",
-      subtitle: "日度 · 东方财富全A(沪深京) 整体法",
+      subtitle: "日度 · 万得全A(881001.WI) 整体法",
       unit: "倍",
       digits: 2,
       axisType: "time",
@@ -233,7 +233,7 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "5年",
-      source: "东方财富 · 全A(沪深京) 市盈率 TTM"
+      source: "Wind · 万得全A(881001.WI) 市盈率 TTM"
     },
 
     /* ---------------------------------------------------------------- 图 10 */
@@ -242,7 +242,7 @@ window.DASHBOARD_CONFIG = {
       page: "sentiment",
       group: "估值",
       title: "全A 市净率",
-      subtitle: "日度 · 东方财富全A(沪深京) 整体法",
+      subtitle: "日度 · 万得全A(881001.WI) 整体法",
       unit: "倍",
       digits: 2,
       axisType: "time",
@@ -255,7 +255,7 @@ window.DASHBOARD_CONFIG = {
         { label: "全部", periods: null }
       ],
       default: "5年",
-      source: "东方财富 · 全A(沪深京) 市净率"
+      source: "Wind · 万得全A(881001.WI) 市净率 PB(LF)"
     },
 
     /* ---------------------------------------------------------------- 图 11 */
@@ -264,7 +264,7 @@ window.DASHBOARD_CONFIG = {
       page: "sentiment",
       group: "风险溢价",
       title: "股权风险溢价（EP − 10Y 国债）",
-      subtitle: "日度 · 全A 隐含收益率 减 10年期国债收益率",
+      subtitle: "日度 · 全A 盈利收益率 减 10年期国债收益率",
       unit: "%",
       digits: 2,
       axisType: "time",
@@ -278,7 +278,7 @@ window.DASHBOARD_CONFIG = {
       ],
       default: "5年",
       note: "分位已做方向反转：数值越高表示越便宜",
-      source: "东方财富 · 全A 市盈率 TTM 与 10 年期国债收益率"
+      source: "Wind · 万得全A 市盈率 TTM 与中债 10 年期国债收益率(S0059749)"
     }
   ]
 };

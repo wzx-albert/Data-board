@@ -127,12 +127,25 @@ python scripts/build_data.py --full
 ### 数据链路
 
 ```
-底表（csv / xlsx，由数据源导出）
-  ↓ python scripts/import_sentiment.py --file <底表>
-data/source/sentiment.json          # 原料：原始日频字段
+Wind 终端 Excel 插件（WSD 公式）
+  ↓ python scripts/wind_fetch.py run config.json data/source/wind_core.json
+data/source/wind_core.json          # 881001.WI 的成交额/换手率/PE/PB/流通市值
+data/source/bond.json               # 中债收益率 1Y/10Y/AA+3Y
+  ↓ python scripts/fetch_margin.py
+data/source/margin.json             # 东财两融历史
+  ↓ python scripts/build_sentiment_source.py
+data/source/sentiment.json          # 原料：按交易日对齐后的原始字段
   ↓ python scripts/build_sentiment.py
 data/sentiment-data.js              # 成品：8 个衍生指标 + 分位 + 汇总
 ```
+
+也可以绕过 Wind，直接把手工整理的底表导入：
+
+```bash
+python scripts/import_sentiment.py --file <csv/xlsx>
+```
+
+取数通道可用性、代码与字段清单见 `docs/DATA-SOURCES.md`。
 
 ### 原料字段
 
@@ -152,11 +165,11 @@ data/sentiment-data.js              # 成品：8 个衍生指标 + 分位 + 汇�
 
 | key | 指标 | 维度 | 算法 |
 |---|---|---|---|
-| `sent_amt_cap` | 成交额 / 总市值 | 量 | amount ÷ mktcap_total |
+| `sent_amt_cap` | A股成交额 | 量 | amount ÷ 1e8（亿元） |
 | `sent_turnover` | 换手率 | 量 | 直接取，或 amount ÷ mktcap_float |
-| `sent_advance` | 上涨家数占比 | 价 | adv ÷ (adv + dec) |
+| `sent_advance` | 上涨家数占比 | 价 | adv ÷ (adv + dec)　**数据待补** |
 | `sent_mbuy` | 融资买入 / 成交额 | 资金 | margin_buy ÷ amount |
-| `sent_mbal` | 融资余额 / 总市值 | 资金 | margin_bal ÷ mktcap_total |
+| `sent_mbal` | 融资余额 / 流通市值 | 资金 | 优先取 `margin_bal_float_ratio`，否则 margin_bal ÷ mktcap_float |
 | `sent_pe` | 全A 市盈率 TTM | 估值 | 直接取 |
 | `sent_pb` | 全A 市净率 | 估值 | 直接取 |
 | `sent_erp` | EP − 10Y 国债 | 风险溢价 | 100 ÷ pe − y10 |
@@ -178,3 +191,5 @@ data/sentiment-data.js              # 成品：8 个衍生指标 + 分位 + 汇�
 ### 注意
 
 `build_sentiment.py --demo` 会用随机序列生成占位数据，并在 `meta.demo = true`；页面上会出现红色「示例数据」角标。**正式上线前必须用真实底表重建**，不能把 demo 数据推上去。
+
+当前线上为真实数据（2005-01-04 起 5314 个交易日）。8 个指标中 7 个有真实序列，`sent_advance`（上涨家数占比）因缺日频历史源暂为空，页面上标注「数据待补」。
